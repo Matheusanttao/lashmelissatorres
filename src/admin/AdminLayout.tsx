@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Bell, CalendarDays, CalendarPlus, ExternalLink, FileText, Home, Images, LayoutGrid, Lock, LogOut, Menu, Palette, Plus,
-  Settings, Sparkles, UserPlus, Users, BellPlus,
+  Settings, Sparkles, UserPlus, Users, BellPlus, Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSiteContent } from '@/hooks/useSiteContent';
@@ -17,6 +17,7 @@ const MAIN = [
   { to: '/admin', label: 'Visão geral', icon: LayoutGrid, end: true },
   { to: '/admin/agenda', label: 'Agenda', icon: CalendarDays },
   { to: '/admin/ata', label: 'Ata do dia', icon: FileText },
+  { to: '/admin/financeiro', label: 'Financeiro', icon: Wallet },
   { to: '/admin/clientes', label: 'Clientes', icon: Users },
   { to: '/admin/lembretes', label: 'Lembretes e tarefas', icon: Bell },
 ];

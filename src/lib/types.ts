@@ -163,6 +163,19 @@ export interface Reminder {
   client?: Pick<Client, 'id' | 'name' | 'whatsapp'> | null;
 }
 
+/** Lançamentos manuais do controle financeiro do painel. */
+export type FinanceCategory = 'gasto' | 'anuncio' | 'reserva' | 'retirada' | 'extra';
+
+export interface FinanceEntry {
+  id: string;
+  entry_date: string;
+  category: FinanceCategory;
+  amount_cents: number;
+  title: string;
+  notes: string | null;
+  created_at: string;
+}
+
 export interface MaintenanceSuggestion {
   client_id: string;
   client_name: string;

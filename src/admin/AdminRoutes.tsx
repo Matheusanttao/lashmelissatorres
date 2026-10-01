@@ -22,6 +22,7 @@ const GalleryAdminPage = lazy(() => import('./pages/GalleryAdminPage'));
 const ContentPage = lazy(() => import('./pages/ContentPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const DailyReportPage = lazy(() => import('./pages/DailyReportPage'));
+const FinancePage = lazy(() => import('./pages/FinancePage'));
 
 function Centered({ children }: { children: ReactNode }) {
   return (
@@ -96,6 +97,7 @@ export default function AdminRoutes() {
         <Route path="clientes/:id" element={<Lazy><ClientDetailPage /></Lazy>} />
         <Route path="lembretes" element={<Lazy><RemindersPage /></Lazy>} />
         <Route path="ata" element={<Lazy><DailyReportPage /></Lazy>} />
+        <Route path="financeiro" element={<Lazy><FinancePage /></Lazy>} />
         <Route path="servicos" element={<Lazy><ServicesAdminPage /></Lazy>} />
         <Route path="galeria" element={<Lazy><GalleryAdminPage /></Lazy>} />
         <Route path="conteudo" element={<Lazy><ContentPage /></Lazy>} />

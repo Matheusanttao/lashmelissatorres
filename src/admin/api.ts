@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/supabase';
 import type {
-  Appointment, BookingSettings, Client, ClientPhoto, GalleryCategory, GalleryItem, ImageConsent,
+  Appointment, BookingSettings, Client, ClientPhoto, FinanceEntry, GalleryCategory, GalleryItem, ImageConsent,
   MaintenanceSuggestion, Reminder, Service, TimeBlock, WorkingBreak, WorkingHours,
 } from '@/lib/types';
 import { mergeContent, type SiteContent } from '@/lib/content';
@@ -196,6 +196,37 @@ export function useReminders() {
           .order('due_time', { nullsFirst: false })
           .limit(300),
       ) as Reminder[],
+  });
+}
+
+/** Lançamentos financeiros. Passar from/to como YYYY-MM-DD (to exclusivo). */
+export function useFinanceEntries(fromKey: string, toKey: string) {
+  return useQuery({
+    queryKey: ['finance-entries', fromKey, toKey],
+    queryFn: async () =>
+      unwrap(
+        await db()
+          .from('finance_entries')
+          .select('*')
+          .gte('entry_date', fromKey)
+          .lt('entry_date', toKey)
+          .order('entry_date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(500),
+      ) as FinanceEntry[],
+  });
+}
+
+/** Saldo acumulado de reservas (todas as datas) para o card “guardado”. */
+export function useFinanceSavingsBalance() {
+  return useQuery({
+    queryKey: ['finance-entries', 'savings-balance'],
+    queryFn: async () => {
+      const rows = unwrap(
+        await db().from('finance_entries').select('category, amount_cents').in('category', ['reserva', 'retirada']),
+      ) as Pick<FinanceEntry, 'category' | 'amount_cents'>[];
+      return rows.reduce((s, r) => s + (r.category === 'reserva' ? r.amount_cents : -r.amount_cents), 0);
+    },
   });
 }
 

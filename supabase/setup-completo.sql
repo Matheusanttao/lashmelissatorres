@@ -242,6 +242,25 @@ create table if not exists public.reminders (
 );
 create index if not exists reminders_due_idx on public.reminders (done, due_date);
 
+-- ---------- Controle financeiro (gastos, anúncios, reservas) --------
+-- Valores em centavos. Categorias:
+--   gasto    = saída geral (material, transporte, etc.)
+--   anuncio  = investimento em anúncio / divulgação
+--   reserva  = dinheiro guardado (entra no “caixa reserva”)
+--   retirada = tirou da reserva
+--   extra    = ganho avulso (fora dos atendimentos)
+create table if not exists public.finance_entries (
+  id          uuid primary key default gen_random_uuid(),
+  entry_date  date not null default ((now() at time zone 'America/Sao_Paulo')::date),
+  category    text not null check (category in ('gasto', 'anuncio', 'reserva', 'retirada', 'extra')),
+  amount_cents integer not null check (amount_cents > 0),
+  title       text not null check (length(btrim(title)) between 1 and 160),
+  notes       text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists finance_entries_date_idx on public.finance_entries (entry_date desc);
+create index if not exists finance_entries_category_idx on public.finance_entries (category, entry_date);
+
 -- ---------- Controle anti-abuso das solicitações públicas -----------
 create table if not exists public.booking_attempts (
   id         bigserial primary key,
@@ -923,6 +942,7 @@ alter table public.client_photos      enable row level security;
 alter table public.gallery_categories enable row level security;
 alter table public.gallery_items      enable row level security;
 alter table public.reminders          enable row level security;
+alter table public.finance_entries    enable row level security;
 alter table public.booking_attempts   enable row level security;
 
 -- ---------- Permissões de tabela (defesa em profundidade) -------------
@@ -930,7 +950,8 @@ revoke all on
   public.admins, public.site_content, public.booking_settings, public.working_hours,
   public.working_breaks, public.time_blocks, public.services, public.clients,
   public.image_consents, public.appointments, public.client_photos,
-  public.gallery_categories, public.gallery_items, public.reminders, public.booking_attempts
+  public.gallery_categories, public.gallery_items, public.reminders, public.finance_entries,
+  public.booking_attempts
 from anon;
 
 revoke all on public.booking_attempts from authenticated;
@@ -952,7 +973,7 @@ begin
   foreach t in array array[
     'site_content', 'booking_settings', 'working_hours', 'working_breaks', 'time_blocks',
     'services', 'clients', 'image_consents', 'appointments', 'client_photos',
-    'gallery_categories', 'gallery_items', 'reminders'
+    'gallery_categories', 'gallery_items', 'reminders', 'finance_entries'
   ] loop
     execute format('drop policy if exists "admin: acesso total" on public.%I', t);
     execute format(
@@ -1110,6 +1131,27 @@ do $$ begin
     check (salon_cut_percent >= 0 and salon_cut_percent <= 100);
 exception when duplicate_object then null;
 end $$;
+
+
+-- >>>>> 20261001000200_finance_entries.sql <<<<<
+-- Controle financeiro do painel. Idempotente (pode rodar sozinho em bases já criadas).
+create table if not exists public.finance_entries (
+  id           uuid primary key default gen_random_uuid(),
+  entry_date   date not null default ((now() at time zone 'America/Sao_Paulo')::date),
+  category     text not null check (category in ('gasto', 'anuncio', 'reserva', 'retirada', 'extra')),
+  amount_cents integer not null check (amount_cents > 0),
+  title        text not null check (length(btrim(title)) between 1 and 160),
+  notes        text,
+  created_at   timestamptz not null default now()
+);
+create index if not exists finance_entries_date_idx on public.finance_entries (entry_date desc);
+create index if not exists finance_entries_category_idx on public.finance_entries (category, entry_date);
+
+alter table public.finance_entries enable row level security;
+revoke all on public.finance_entries from anon;
+drop policy if exists "admin: acesso total" on public.finance_entries;
+create policy "admin: acesso total" on public.finance_entries
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 
 -- =====================================================================

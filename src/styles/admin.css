@@ -788,3 +788,49 @@
   .ata-brand-mark { width: 60px; height: 60px; border-radius: 14px; }
   .ata-brand-copy h2 { font-size: 1.45rem; }
 }
+
+/* ---------- Financeiro --------------------------------------------- */
+.finance-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.finance-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.finance-row:last-child { border-bottom: 0; }
+.finance-cat {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  background: var(--surface-2, #f6f3f1);
+}
+.finance-cat-anuncio { background: #f3ebe4; color: var(--accent); }
+.finance-cat-reserva { background: #eef6f0; color: var(--success); }
+.finance-cat-retirada { background: #f7f0e8; color: var(--warning, #b7791f); }
+.finance-cat-extra { background: #eef6f0; color: var(--success); }
+.finance-cat-gasto { background: #f8eeee; color: var(--danger); }
+.finance-row-title { font-weight: 650; color: var(--ink); }
+.finance-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.finance-row-actions { display: flex; gap: 2px; }
+@media (max-width: 560px) {
+  .finance-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon title actions"
+      "icon amount actions";
+  }
+  .finance-cat { grid-area: icon; width: 36px; height: 36px; }
+  .finance-row > div:nth-child(2) { grid-area: title; }
+  .finance-amount { grid-area: amount; justify-self: start; font-size: 0.95rem; }
+  .finance-row-actions { grid-area: actions; align-self: start; }
+}
+
