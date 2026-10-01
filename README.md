@@ -19,38 +19,32 @@ aviso visível no topo. Serviços e galeria de exemplo também aparecem marcados
 ## 1. Criar o projeto no Supabase
 
 1. Crie um projeto em <https://supabase.com> (região São Paulo, `sa-east-1`, é a mais próxima).
-2. Aplique as migrations **na ordem**. Escolha uma das opções:
-   - **SQL Editor (mais simples):** abra *SQL Editor → New query* e execute, um por vez, o conteúdo de:
-     1. `supabase/migrations/20260930000100_schema.sql`
-     2. `supabase/migrations/20260930000200_functions.sql`
-     3. `supabase/migrations/20260930000300_security.sql`
-     4. `supabase/migrations/20260930000400_storage.sql`
-     5. `supabase/migrations/20260930000500_defaults.sql`
-   - **Supabase CLI:** `supabase link --project-ref SEU_REF` e depois `supabase db push`.
-3. (Opcional) Rode `supabase/seed-exemplo.sql` para já ter alguns serviços cadastrados.
-
-As migrations podem ser executadas mais de uma vez sem duplicar dados.
-
-## 2. Criar a administradora
-
-Criar conta **não** dá acesso ao painel. A pessoa precisa estar na tabela `admins`, e só o dono do
-projeto consegue inserir alguém ali.
-
-1. *Authentication → Users → Add user → Create new user*: informe e-mail e senha e marque
+2. *Authentication → Users → Add user → Create new user*: informe e-mail e senha e marque
    **Auto Confirm User**.
-2. No *SQL Editor*, rode (trocando o e-mail):
+3. Abra *SQL Editor → New query*, abra o arquivo `supabase/setup-completo.sql`, **troque o e-mail**
+   na seção `ADMIN` no final do arquivo e execute tudo de uma vez.
+4. (Opcional) Rode `supabase/seed-exemplo.sql` para já ter alguns serviços cadastrados.
+5. Recomendado: *Authentication → Sign In / Providers → Email* → desative **Allow new users to sign up**.
 
-   ```sql
-   insert into public.admins (user_id, display_name)
-   select id, 'Ana' from auth.users where email = 'email-da-profissional@exemplo.com';
-   ```
-
-3. Recomendado: *Authentication → Sign In / Providers → Email* → desative **Allow new users to sign up**.
-   Mesmo com o cadastro aberto, ninguém vira administradora sozinha, mas assim nem contas avulsas são criadas.
+As migrations individuais em `supabase/migrations/` continuam disponíveis (e o `npm run test:db` as usa).
+O script único já inclui a inserção na tabela `admins`.
 
 Para remover um acesso: `delete from public.admins where user_id = '...';`
 
-## 3. Configurar a recuperação de senha
+## 2. Configurar o Cloudinary (fotos)
+
+As imagens do site, galeria, serviços e clientes vão para o **Cloudinary** (não usam o Storage do Supabase
+no frontend).
+
+1. Crie uma conta em <https://cloudinary.com>.
+2. Anote o **Cloud name** em *Settings → Product environment credentials*.
+3. Em *Settings → Upload → Upload presets*, crie um preset **Unsigned** (ex.: `lash_unsigned`).
+4. Coloque cloud name e preset no `.env.local` (veja a seção de variáveis abaixo).
+
+Apagar uma foto no painel remove a referência no banco; arquivos órfãos podem ser limpos no painel do
+Cloudinary (a API de exclusão precisa de chave secreta, que não fica no navegador).
+
+## 3. Configurar a recuperação de senha (Supabase)
 
 Em *Authentication → URL Configuration*:
 
@@ -62,16 +56,18 @@ Se quiser, traduza o modelo do e-mail em *Authentication → Emails → Reset Pa
 
 ## 4. Variáveis de ambiente
 
-Copie `.env.example` para `.env.local` e preencha com os dados de *Project Settings → API*:
+Copie `.env.example` para `.env.local` e preencha:
 
 ```
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anon-publica
+VITE_CLOUDINARY_CLOUD_NAME=seu-cloud-name
+VITE_CLOUDINARY_UPLOAD_PRESET=seu-upload-preset-unsigned
 ```
 
-Use **apenas a chave `anon` (pública)**. Nunca coloque a `service_role` no frontend nem na Vercel com
-prefixo `VITE_`: tudo que começa com `VITE_` vai para o navegador. A segurança real está nas políticas
-de RLS do banco.
+Use **apenas a chave `anon` (pública)** do Supabase. Nunca coloque `service_role` nem a API secret do
+Cloudinary no frontend nem na Vercel com prefixo `VITE_`: tudo que começa com `VITE_` vai para o
+navegador. A segurança do banco está nas políticas de RLS; o upload de imagens usa preset **unsigned**.
 
 ## 5. Rodar localmente
 
@@ -98,8 +94,8 @@ Outros comandos:
 1. Envie o projeto para um repositório no GitHub.
 2. Na Vercel: *Add New → Project* → importe o repositório. Ela detecta **Vite** automaticamente
    (build `npm run build`, saída `dist`).
-3. Em *Settings → Environment Variables*, cadastre `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
-   (Production e Preview).
+3. Em *Settings → Environment Variables*, cadastre `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+   `VITE_CLOUDINARY_CLOUD_NAME` e `VITE_CLOUDINARY_UPLOAD_PRESET` (Production e Preview).
 4. Faça o deploy. O `vercel.json` já cuida das rotas do site (atualizar a página em `/admin/agenda`
    funciona) e dos cabeçalhos de cache e segurança.
 5. Volte ao passo 3 e cadastre o domínio final nas URLs de autenticação do Supabase.
@@ -131,7 +127,7 @@ Alterações feitas no painel aparecem no site sem novo deploy: o conteúdo vem 
 | Só administradoras acessam o painel | Tabela `admins` sem política de escrita; `is_admin()` em todas as políticas; o painel também verifica e desconecta contas sem permissão |
 | Galeria só com autorização de imagem | Gatilho impede publicar sem autorização ativa; revogar a autorização tira as fotos do site na hora |
 | Dados pessoais fora da galeria | A função pública não devolve cliente nem autorização |
-| Imagens públicas x arquivos privados | Bucket `public-media` (site) e `private-media` (acompanhamento e documentos, acesso por URL assinada temporária) |
+| Imagens | Upload via Cloudinary (preset unsigned); galeria pública só com autorização ativa no banco |
 
 Observações:
 
@@ -145,11 +141,12 @@ Observações:
 
 ```
 supabase/
+  setup-completo.sql script único para o SQL Editor (migrations + admin)
   migrations/        estrutura, funções, RLS, storage e valores iniciais
   tests/             testes do banco (npm run test:db)
   seed-exemplo.sql   serviços de exemplo (opcional)
 src/
-  lib/               formatação (datas, reais, telefone), conteúdo padrão, storage, WhatsApp, erros
+  lib/               formatação, conteúdo padrão, Cloudinary, WhatsApp, erros
   hooks/             autenticação, conteúdo do site, dados públicos
   components/ui/     botões, campos, modais, avisos, estados vazios, envio de imagens, marca
   public/            layout e páginas do site
@@ -162,5 +159,3 @@ src/
 As cores de destaque e de fundo são escolhidas no painel (*Conteúdo do site → Marca e banner*). Se a cor
 escolhida deixar os botões com pouco contraste, ela é escurecida automaticamente. Os demais tokens
 (tipografia, raios, sombras) ficam em `src/styles/base.css`.
-#   l a s h m e l i s s a t o r r e s  
- 

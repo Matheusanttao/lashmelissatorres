@@ -21,6 +21,3 @@ export function db(): SupabaseClient {
   }
   return supabase;
 }
-
-export const PUBLIC_BUCKET = 'public-media';
-export const PRIVATE_BUCKET = 'private-media';

@@ -1,7 +1,30 @@
-import { db, PRIVATE_BUCKET, PUBLIC_BUCKET } from './supabase';
+/**
+ * Upload de imagens via Cloudinary (unsigned upload preset).
+ * Configure VITE_CLOUDINARY_CLOUD_NAME e VITE_CLOUDINARY_UPLOAD_PRESET no .env.local.
+ *
+ * No Cloudinary: Settings → Upload → Upload presets → Add unsigned preset.
+ * Pastas sugeridas: site, servicos, galeria, clientes, autorizacoes.
+ */
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const MAX_PUBLIC = 8 * 1024 * 1024;
+const MAX_PRIVATE = 15 * 1024 * 1024;
+
+function cloudName(): string {
+  const name = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+  if (!name || name.includes('SEU-')) {
+    throw new Error('Cloudinary não configurado. Preencha VITE_CLOUDINARY_CLOUD_NAME no .env.local.');
+  }
+  return name;
+}
+
+function uploadPreset(): string {
+  const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+  if (!preset || preset.includes('SEU-')) {
+    throw new Error('Cloudinary não configurado. Preencha VITE_CLOUDINARY_UPLOAD_PRESET no .env.local.');
+  }
+  return preset;
+}
 
 export function validateImage(file: File, maxBytes = MAX_PUBLIC): string | null {
   if (!IMAGE_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
@@ -33,62 +56,81 @@ export async function compressImage(file: File, maxSize = 2000, quality = 0.86):
   }
 }
 
-function randomName(file: File): string {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+type CloudinaryUpload = {
+  public_id: string;
+  secure_url: string;
+  resource_type: string;
+};
+
+async function uploadToCloudinary(
+  file: File,
+  folder: string,
+  resourceType: 'image' | 'auto' = 'image',
+): Promise<CloudinaryUpload> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', uploadPreset());
+  form.append('folder', folder.replace(/^\/+|\/+$/g, ''));
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName()}/${resourceType}/upload`, {
+    method: 'POST',
+    body: form,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.error?.message || 'Falha ao enviar a imagem para o Cloudinary.');
+  }
+  return data as CloudinaryUpload;
 }
 
-/** Envia imagem pública (site). Retorna o caminho e a URL pública. */
+function deliveryUrl(publicIdOrUrl: string): string {
+  if (publicIdOrUrl.startsWith('http://') || publicIdOrUrl.startsWith('https://')) return publicIdOrUrl;
+  return `https://res.cloudinary.com/${cloudName()}/image/upload/${publicIdOrUrl}`;
+}
+
+/** Envia imagem pública (site). Retorna o public_id e a URL HTTPS. */
 export async function uploadPublicImage(file: File, folder: string): Promise<{ path: string; url: string }> {
   const processed = await compressImage(file);
-  const path = `${folder}/${randomName(processed)}`;
-  const { error } = await db().storage.from(PUBLIC_BUCKET).upload(path, processed, {
-    cacheControl: '31536000',
-    contentType: processed.type,
-    upsert: false,
-  });
-  if (error) throw error;
-  const { data } = db().storage.from(PUBLIC_BUCKET).getPublicUrl(path);
-  return { path, url: data.publicUrl };
+  const data = await uploadToCloudinary(processed, folder, 'image');
+  return { path: data.public_id, url: data.secure_url };
 }
 
-/** Envia arquivo privado (acompanhamento / autorizações). Retorna o caminho. */
+/** Envia arquivo privado (acompanhamento / autorizações). Retorna o public_id (ou URL). */
 export async function uploadPrivateFile(file: File, folder: string): Promise<string> {
+  if (file.size > MAX_PRIVATE) {
+    throw new Error(`O arquivo precisa ter até ${Math.round(MAX_PRIVATE / 1024 / 1024)} MB.`);
+  }
   const processed = file.type.startsWith('image/') ? await compressImage(file) : file;
-  const path = `${folder}/${randomName(processed)}`;
-  const { error } = await db().storage.from(PRIVATE_BUCKET).upload(path, processed, {
-    contentType: processed.type,
-    upsert: false,
-  });
-  if (error) throw error;
-  return path;
+  const data = await uploadToCloudinary(processed, folder, 'auto');
+  return data.secure_url;
 }
 
-export async function signedUrls(paths: string[], expiresIn = 3600): Promise<Record<string, string>> {
-  if (!paths.length) return {};
-  const { data, error } = await db().storage.from(PRIVATE_BUCKET).createSignedUrls(paths, expiresIn);
-  if (error) throw error;
+/** Resolve URLs de arquivos privados (Cloudinary já devolve URL pública via preset unsigned). */
+export async function signedUrls(paths: string[], _expiresIn = 3600): Promise<Record<string, string>> {
   const map: Record<string, string> = {};
-  data?.forEach((d) => {
-    if (d.path && d.signedUrl) map[d.path] = d.signedUrl;
-  });
+  for (const p of paths) {
+    if (p) map[p] = deliveryUrl(p);
+  }
   return map;
 }
 
-export async function removePublic(paths: (string | null | undefined)[]) {
-  const list = paths.filter(Boolean) as string[];
-  if (list.length) await db().storage.from(PUBLIC_BUCKET).remove(list);
+/**
+ * Remoção no Cloudinary exige API secret (só no servidor).
+ * Aqui só limpa a referência no app; apague órfãos no painel do Cloudinary se quiser.
+ */
+export async function removePublic(_paths: (string | null | undefined)[]) {
+  /* no-op no frontend */
 }
 
-export async function removePrivate(paths: (string | null | undefined)[]) {
-  const list = paths.filter(Boolean) as string[];
-  if (list.length) await db().storage.from(PRIVATE_BUCKET).remove(list);
+export async function removePrivate(_paths: (string | null | undefined)[]) {
+  /* no-op no frontend */
 }
 
-/** Extrai o caminho do arquivo a partir de uma URL pública do bucket. */
+/** Extrai o public_id a partir de uma URL do Cloudinary (ou devolve null). */
 export function pathFromPublicUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  const marker = `/object/public/${PUBLIC_BUCKET}/`;
-  const i = url.indexOf(marker);
-  return i >= 0 ? decodeURIComponent(url.slice(i + marker.length)) : null;
+  const m = url.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+  if (m?.[1]) return decodeURIComponent(m[1].replace(/\.[a-z0-9]+$/i, ''));
+  return null;
 }
