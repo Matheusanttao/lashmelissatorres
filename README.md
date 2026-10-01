@@ -162,3 +162,5 @@ src/
 As cores de destaque e de fundo são escolhidas no painel (*Conteúdo do site → Marca e banner*). Se a cor
 escolhida deixar os botões com pouco contraste, ela é escurecida automaticamente. Os demais tokens
 (tipografia, raios, sombras) ficam em `src/styles/base.css`.
+#   l a s h m e l i s s a t o r r e s  
+ 
