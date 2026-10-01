@@ -18,6 +18,7 @@ import { db } from '@/lib/supabase';
 import type { Appointment } from '@/lib/types';
 import { unwrap, useAppointments, useBookingSettings, useInvalidate } from '../api';
 import { PageHeader } from '../AdminLayout';
+import { LashMark } from '@/components/ui/Brand';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Callout, EmptyState, ErrorState, LoadingBlock } from '@/components/ui/Feedback';
 import { TextInput } from '@/components/ui/Field';
@@ -185,20 +186,22 @@ export default function DailyReportPage() {
             placeholder="Ex.: Ana"
             hint="Aparece no cabeçalho do PDF/imagem."
           />
-          <TextInput
-            label="% da dona"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={100}
-            step={0.5}
-            value={cut}
-            onChange={(e) => setCut(Number(e.target.value))}
-          />
-          <div className="ata-toolbar-save">
-            <Button size="sm" variant="secondary" icon={<Save />} loading={savingCut} onClick={saveCut}>
-              Salvar %
-            </Button>
+          <div className="ata-cut-group">
+            <TextInput
+              label="% da dona"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              max={100}
+              step={0.5}
+              value={cut}
+              onChange={(e) => setCut(Number(e.target.value))}
+            />
+            <div className="ata-toolbar-save">
+              <Button size="sm" variant="secondary" icon={<Save />} loading={savingCut} onClick={saveCut}>
+                Salvar %
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -240,8 +243,23 @@ export default function DailyReportPage() {
           <div className="ata-preview-wrap">
             <p className="muted small" style={{ marginBottom: 8 }}>Pré-visualização (é o que sai no PDF/imagem)</p>
             <div className="ata-sheet" ref={printRef} id="ata-print">
-              <header className="ata-sheet-head">
-                <div>
+              <header className="ata-sheet-brand">
+                <div className="ata-brand-mark">
+                  {content.logo ? (
+                    <img
+                      src={content.logo}
+                      alt=""
+                      className="ata-logo"
+                      crossOrigin="anonymous"
+                      decoding="sync"
+                    />
+                  ) : (
+                    <span className="ata-logo-fallback" aria-hidden>
+                      <LashMark size={44} />
+                    </span>
+                  )}
+                </div>
+                <div className="ata-brand-copy">
                   <p className="ata-kicker">Ata diária</p>
                   <h2>{content.studioName || 'Estúdio'}</h2>
                   <p className="ata-date">{capitalize(formatLongDate(spToDate(day)))}</p>
@@ -252,6 +270,22 @@ export default function DailyReportPage() {
                   <span>Gerada em {formatKeyDate(todayKey())}</span>
                 </div>
               </header>
+
+              {(content.about.photo || content.heroImage) && (
+                <div className="ata-photo-strip">
+                  <img
+                    src={content.about.photo || content.heroImage || ''}
+                    alt=""
+                    className="ata-photo"
+                    crossOrigin="anonymous"
+                    decoding="sync"
+                  />
+                  <div className="ata-photo-caption">
+                    <strong>{content.about.name || content.studioName}</strong>
+                    <span>{content.about.role || content.tagline}</span>
+                  </div>
+                </div>
+              )}
 
               {list.length === 0 ? (
                 <EmptyState icon={Receipt} title="Nenhum atendimento neste dia" text="Quando houver agenda, a lista e os totais aparecem aqui." />
