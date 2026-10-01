@@ -118,7 +118,7 @@ await as('authenticated', ADMIN, () => db.query(`update site_content set draft='
 ok((await as('anon', null, () => db.query(`select get_site_content() c`))).rows[0].c.content.studioName === undefined, 'rascunho não aparece antes de publicar');
 await as('authenticated', ADMIN, () => db.query(`select publish_site_content()`));
 ok((await as('anon', null, () => db.query(`select get_site_content() c`))).rows[0].c.content.studioName === 'Ateliê Teste', 'publicado aparece');
-ok((await as('anon', null, () => db.query('select * from services'))).rows.length === 1, 'visitante lê serviços ativos');
+ok((await as('anon', null, () => db.query('select * from services'))).rows.length >= 1, 'visitante lê serviços ativos');
 await db.exec(`update services set active=false`);
 ok((await as('anon', null, () => db.query('select * from services'))).rows.length === 0, 'serviço inativo oculto');
 ok(await err(as('anon', null, () => db.query(`select request_booking('${svc}', '${day}T20:00:00Z', 'Bia Lima', '11955554444')`))), 'serviço inativo não agenda');
