@@ -593,3 +593,102 @@
 .auth-card h1 { font-size: 2.2rem; text-align: center; }
 .auth-card > p { text-align: center; color: var(--ink-2); margin: 6px 0 24px; }
 .auth-foot { margin-top: 20px; text-align: center; font-size: 0.9rem; }
+
+/* ---------- Ata diária --------------------------------------------- */
+.ata-toolbar { display: grid; gap: 16px; margin-bottom: 16px; }
+.ata-day-nav { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.ata-day-nav .field { margin: 0; min-width: 160px; }
+.ata-toolbar-fields {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr auto;
+  gap: 14px;
+  align-items: end;
+}
+.ata-toolbar-save { padding-bottom: 2px; }
+.money-card.ata-money-summary { grid-template-columns: repeat(3, 1fr); }
+.money-card.ata-money-summary > div + div { border-left: 1px solid var(--line); }
+
+.ata-preview-wrap { margin-top: 4px; }
+.ata-sheet {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 28px 24px 22px;
+  box-shadow: var(--shadow-sm);
+}
+.ata-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 2px solid #1a1a1a;
+  margin-bottom: 18px;
+}
+.ata-kicker {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #666;
+}
+.ata-sheet-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.ata-date { margin: 6px 0 0; color: #444; font-size: 0.95rem; }
+.ata-sheet-meta {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: #555;
+}
+.ata-sheet-meta strong { color: #1a1a1a; font-size: 1rem; }
+
+.ata-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.ata-table th,
+.ata-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e8e4df;
+  vertical-align: top;
+}
+.ata-table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #666;
+}
+.ata-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ata-row-muted td { color: #888; }
+
+.ata-sheet-foot { margin-top: 22px; padding-top: 16px; border-top: 2px solid #1a1a1a; }
+.ata-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px 16px;
+}
+.ata-totals > div { display: grid; gap: 2px; }
+.ata-totals span { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.ata-totals strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; color: #1a1a1a; }
+.ata-total-owner strong { color: var(--accent); }
+.ata-note { margin: 16px 0 0; font-size: 0.78rem; color: #777; line-height: 1.4; }
+
+@media (max-width: 720px) {
+  .ata-toolbar-fields { grid-template-columns: 1fr; }
+  .money-card.ata-money-summary { grid-template-columns: 1fr; }
+  .money-card.ata-money-summary > div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .ata-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ata-sheet-meta { text-align: left; }
+}

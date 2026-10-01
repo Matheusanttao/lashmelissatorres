@@ -23,11 +23,10 @@ aviso visível no topo. Serviços e galeria de exemplo também aparecem marcados
    **Auto Confirm User**.
 3. Abra *SQL Editor → New query*, abra o arquivo `supabase/setup-completo.sql`, **troque o e-mail**
    na seção `ADMIN` no final do arquivo e execute tudo de uma vez.
-4. (Opcional) Rode `supabase/seed-exemplo.sql` para já ter alguns serviços cadastrados.
-5. Recomendado: *Authentication → Sign In / Providers → Email* → desative **Allow new users to sign up**.
+4. Recomendado: *Authentication → Sign In / Providers → Email* → desative **Allow new users to sign up**.
 
-As migrations individuais em `supabase/migrations/` continuam disponíveis (e o `npm run test:db` as usa).
-O script único já inclui a inserção na tabela `admins`.
+Só existe **um** script de banco: `supabase/setup-completo.sql` (estrutura, funções, segurança,
+storage, valores iniciais, serviços de exemplo e liberação da admin).
 
 Para remover um acesso: `delete from public.admins where user_id = '...';`
 
@@ -87,7 +86,7 @@ Outros comandos:
 | --- | --- |
 | `npm run build` | Verifica os tipos e gera a versão de produção em `dist/` |
 | `npm run preview` | Serve o build localmente |
-| `npm run test:db` | Aplica as migrations num Postgres em memória e roda 46 verificações de segurança e agenda |
+| `npm run test:db` | Aplica `setup-completo.sql` num Postgres em memória e roda 46 verificações de segurança e agenda |
 
 ## 6. Publicar na Vercel
 
@@ -141,10 +140,8 @@ Observações:
 
 ```
 supabase/
-  setup-completo.sql script único para o SQL Editor (migrations + admin)
-  migrations/        estrutura, funções, RLS, storage e valores iniciais
+  setup-completo.sql único script do banco (rode no SQL Editor)
   tests/             testes do banco (npm run test:db)
-  seed-exemplo.sql   serviços de exemplo (opcional)
 src/
   lib/               formatação, conteúdo padrão, Cloudinary, WhatsApp, erros
   hooks/             autenticação, conteúdo do site, dados públicos

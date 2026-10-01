@@ -146,8 +146,10 @@ function BookingTab() {
   async function save() {
     setSaving(true);
     try {
-      const { auto_approve, slot_step_minutes, buffer_minutes, min_advance_hours, max_advance_days, max_pending_per_phone } = s!;
-      unwrap(await db().from('booking_settings').update({ auto_approve, slot_step_minutes, buffer_minutes, min_advance_hours, max_advance_days, max_pending_per_phone }).eq('id', 1).select('id'));
+      const { auto_approve, slot_step_minutes, buffer_minutes, min_advance_hours, max_advance_days, max_pending_per_phone, salon_cut_percent } = s!;
+      unwrap(await db().from('booking_settings').update({
+        auto_approve, slot_step_minutes, buffer_minutes, min_advance_hours, max_advance_days, max_pending_per_phone, salon_cut_percent,
+      }).eq('id', 1).select('id'));
       await invalidate('booking-settings', ...SLOT_AGENDA_KEYS);
       toast.success('Regras de agendamento salvas.');
     } catch (e) {
@@ -173,6 +175,17 @@ function BookingTab() {
         <TextInput label="Antecedência mínima (horas)" type="number" inputMode="numeric" min={0} max={720} value={s.min_advance_hours} onChange={(e) => set('min_advance_hours', Number(e.target.value))} hint="Evita reservas em cima da hora." />
         <TextInput label="Agenda aberta para (dias)" type="number" inputMode="numeric" min={1} max={365} value={s.max_advance_days} onChange={(e) => set('max_advance_days', Number(e.target.value))} hint="Até quantos dias à frente a cliente pode agendar." />
         <TextInput label="Solicitações pendentes por WhatsApp" type="number" inputMode="numeric" min={1} max={10} value={s.max_pending_per_phone} onChange={(e) => set('max_pending_per_phone', Number(e.target.value))} hint="Proteção contra abuso: limite de pedidos em aberto por número." />
+        <TextInput
+          label="% da dona do salão"
+          type="number"
+          inputMode="decimal"
+          min={0}
+          max={100}
+          step={0.5}
+          value={s.salon_cut_percent ?? 30}
+          onChange={(e) => set('salon_cut_percent', Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+          hint="Usado na ata diária: quanto do faturamento você repassa para a dona."
+        />
       </div>
       <Callout tone="info">
         O banco de dados impede qualquer sobreposição de horários — inclusive quando duas clientes tentam reservar ao mesmo tempo — e

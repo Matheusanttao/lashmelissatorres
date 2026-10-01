@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Bell, CalendarDays, CalendarPlus, ExternalLink, Home, Images, LayoutGrid, Lock, LogOut, Menu, Palette, Plus,
+  Bell, CalendarDays, CalendarPlus, ExternalLink, FileText, Home, Images, LayoutGrid, Lock, LogOut, Menu, Palette, Plus,
   Settings, Sparkles, UserPlus, Users, BellPlus,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +16,7 @@ import { todayKey } from '@/lib/format';
 const MAIN = [
   { to: '/admin', label: 'Visão geral', icon: LayoutGrid, end: true },
   { to: '/admin/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/admin/ata', label: 'Ata do dia', icon: FileText },
   { to: '/admin/clientes', label: 'Clientes', icon: Users },
   { to: '/admin/lembretes', label: 'Lembretes e tarefas', icon: Bell },
 ];

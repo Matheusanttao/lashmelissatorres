@@ -1,13 +1,14 @@
 -- =====================================================================
--- Studio de Cílios — setup completo (rode UMA vez no SQL Editor)
+-- Studio de Cílios — ÚNICO script do banco
+-- Rode UMA vez no SQL Editor do Supabase (tudo de uma vez).
 -- =====================================================================
--- Inclui: schema, functions, security, storage, defaults e admin.
+-- Inclui: schema, funções, segurança, storage, valores iniciais,
+-- serviços de exemplo (opcional) e liberação da admin.
 --
--- Antes da seção ADMIN no final:
+-- Antes de rodar:
 --   1. Authentication → Users → Add user (marque Auto Confirm User)
---   2. Troque o e-mail na seção ADMIN abaixo
+--   2. Troque o e-mail na seção ADMIN no final deste arquivo
 -- =====================================================================
-
 
 
 -- >>>>> 20260930000100_schema.sql <<<<<
@@ -55,6 +56,7 @@ create table if not exists public.booking_settings (
   min_advance_hours     integer not null default 2  check (min_advance_hours between 0 and 720),
   max_advance_days      integer not null default 60 check (max_advance_days between 1 and 365),
   max_pending_per_phone integer not null default 2  check (max_pending_per_phone between 1 and 10),
+  salon_cut_percent     numeric(5, 2) not null default 30 check (salon_cut_percent >= 0 and salon_cut_percent <= 100),
   msg_confirm           text,
   msg_reminder          text,
   msg_maintenance       text,
@@ -1096,8 +1098,45 @@ select v.name, v.ord
 from (values ('Fio a fio', 1), ('Volume brasileiro', 2), ('Volume russo', 3), ('Efeito molhado', 4)) as v(name, ord)
 where not exists (select 1 from public.gallery_categories);
 
+
+-- >>>>> 20261001000100_salon_cut.sql <<<<<
+-- Percentual da dona do salão (ata diária). Idempotente.
+alter table public.booking_settings
+  add column if not exists salon_cut_percent numeric(5, 2) not null default 30;
+
+do $$ begin
+  alter table public.booking_settings
+    add constraint booking_settings_salon_cut_percent_check
+    check (salon_cut_percent >= 0 and salon_cut_percent <= 100);
+exception when duplicate_object then null;
+end $$;
+
+
 -- =====================================================================
--- ADMIN — troque o e-mail e o nome antes de rodar (ou rode só este bloco)
+-- SERVIÇOS DE EXEMPLO (pode apagar esta seção se preferir cadastrar pelo painel)
+-- =====================================================================
+-- =====================================================================
+-- OPCIONAL: serviços de exemplo para começar mais rápido.
+-- Rode apenas se quiser. Depois ajuste nomes, preços e fotos pelo painel
+-- (Serviços e preços). Pode ser executado no SQL Editor do Supabase.
+-- =====================================================================
+insert into public.services
+  (name, type, duration_minutes, price_cents, price_is_from, description, featured, sort_order, maintenance_interval_days, maintenance_rules)
+values
+  ('Fio a fio clássico', 'aplicacao', 120, 16000, false,
+   'Um fio sintético sobre cada fio natural. Efeito rímel, natural e delicado.', true, 1, 18, null),
+  ('Volume brasileiro', 'aplicacao', 150, 18000, false,
+   'Fios em formato de Y que trazem preenchimento com leveza.', true, 2, 18, null),
+  ('Volume russo', 'aplicacao', 180, 22000, true,
+   'Leques feitos à mão para um olhar marcante e sofisticado.', true, 3, 18, null),
+  ('Manutenção', 'manutencao', 90, 11000, true,
+   'Reposição dos fios que caíram naturalmente.', false, 1, 18, 'Válida até 21 dias após a última aplicação.'),
+  ('Remoção segura', 'remocao', 30, 5000, false,
+   'Retirada com removedor próprio, sem danificar os fios naturais.', false, 1, null, null);
+
+
+-- =====================================================================
+-- ADMIN — troque o e-mail e o nome antes de rodar
 -- A usuária JÁ precisa existir em Authentication → Users.
 -- =====================================================================
 insert into public.admins (user_id, display_name)

@@ -1,11 +1,11 @@
-// Testes do banco: aplica as migrations reais num Postgres em memória (PGlite)
+// Testes do banco: aplica o script único num Postgres em memória (PGlite)
 // e valida conflitos de agenda, RLS, galeria/autorizações e publicação.
 // Rode com: npm run test:db
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const MIG = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
+const SETUP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'setup-completo.sql');
 const db = new PGlite();
 // Simula o que o Supabase já fornece: papéis, auth.uid() e o schema de storage.
 const stub = `
@@ -21,13 +21,10 @@ create table storage.objects (id uuid default gen_random_uuid(), bucket_id text,
 alter table storage.objects enable row level security;
 `;
 await db.exec(stub);
-for (const f of fs.readdirSync(MIG).sort()) {
-  try { await db.exec(fs.readFileSync(path.join(MIG, f), 'utf8')); console.log('OK migration', f); }
-  catch (e) { console.log('FAIL migration', f, e.message); process.exit(1); }
-}
-for (const f of fs.readdirSync(MIG).sort()) {
-  try { await db.exec(fs.readFileSync(path.join(MIG, f), 'utf8')); } catch (e) { console.log('FAIL rerun', f, e.message); }
-}
+const sql = fs.readFileSync(SETUP, 'utf8');
+try { await db.exec(sql); console.log('OK setup-completo.sql'); }
+catch (e) { console.log('FAIL setup-completo.sql', e.message); process.exit(1); }
+try { await db.exec(sql); } catch (e) { console.log('FAIL rerun', e.message); process.exit(1); }
 console.log('rerun ok');
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  OK ', m); } else { fail++; console.log('  FALHA', m); } };
