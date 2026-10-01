@@ -101,6 +101,8 @@ export interface BookingSettings {
   min_advance_hours: number;
   max_advance_days: number;
   max_pending_per_phone: number;
+  /** Percentual do faturamento do dia que fica com a dona do salão (ata). */
+  salon_cut_percent: number;
   msg_confirm: string | null;
   msg_reminder: string | null;
   msg_maintenance: string | null;

@@ -42,6 +42,7 @@ create table if not exists public.booking_settings (
   min_advance_hours     integer not null default 2  check (min_advance_hours between 0 and 720),
   max_advance_days      integer not null default 60 check (max_advance_days between 1 and 365),
   max_pending_per_phone integer not null default 2  check (max_pending_per_phone between 1 and 10),
+  salon_cut_percent     numeric(5, 2) not null default 30 check (salon_cut_percent >= 0 and salon_cut_percent <= 100),
   msg_confirm           text,
   msg_reminder          text,
   msg_maintenance       text,
