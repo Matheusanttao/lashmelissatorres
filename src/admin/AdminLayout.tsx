@@ -124,7 +124,7 @@ export function AdminLayout() {
           <Users aria-hidden /> Clientes
         </NavLink>
         <NavLink to="/admin/lembretes">
-          <Bell aria-hidden /> Lembretes
+          <Bell aria-hidden /> Tarefas
           {badges.reminders > 0 && <span className="dot">{badges.reminders}</span>}
         </NavLink>
       </nav>

@@ -174,16 +174,16 @@ export default function DashboardPage() {
                 <span className="badge badge-warning">{pending.data.length}</span>
               </div>
               {pending.data.map((a) => (
-                <div key={a.id} className="appt-row" style={{ gridTemplateColumns: '64px 1fr auto', cursor: 'default' }}>
+                <div key={a.id} className="appt-row pending-row">
                   <span className="appt-time">
                     {formatTime(a.starts_at)}
                     <small>{fmt(a.starts_at, 'EEE dd/MM')}</small>
                   </span>
-                  <button type="button" onClick={() => actions.openAppointment(a.id)} style={{ minWidth: 0, textAlign: 'left', background: 'none', border: 0, padding: 0 }}>
+                  <button type="button" className="pending-row-open" onClick={() => actions.openAppointment(a.id)}>
                     <span className="appt-name" style={{ display: 'block' }}>{a.client?.name}</span>
                     <span className="appt-service" style={{ display: 'block' }}>{a.service_name}</span>
                   </button>
-                  <Button size="sm" icon={<CircleCheck />} loading={confirming === a.id} onClick={() => confirm(a)}>
+                  <Button size="sm" className="pending-row-confirm" icon={<CircleCheck />} loading={confirming === a.id} onClick={() => confirm(a)}>
                     Confirmar
                   </Button>
                 </div>

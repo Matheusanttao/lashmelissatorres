@@ -148,7 +148,7 @@ export default function RemindersPage() {
                     ({formatKeyDate(s.due_date)})
                   </div>
                 </div>
-                <div className="row" style={{ gap: 6 }}>
+                <div className="suggest-actions">
                   <ButtonAnchor size="sm" variant="whatsapp" href={whatsappLink(s.whatsapp, msg)} target="_blank" rel="noopener noreferrer" icon={<MessageCircle />}>
                     Mensagem
                   </ButtonAnchor>

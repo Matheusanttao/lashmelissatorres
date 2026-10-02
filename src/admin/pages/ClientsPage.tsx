@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Globe, Search, UserPlus, Users, X } from 'lucide-react';
-import { formatDate, formatPhone, initials } from '@/lib/format';
+import { formatPhone, initials } from '@/lib/format';
 import { useClients } from '../api';
 import { useAdminActions } from '../AdminActions';
 import { PageHeader } from '../AdminLayout';
@@ -78,9 +78,8 @@ export default function ClientsPage() {
                   {c.email ? ` · ${c.email}` : ''}
                 </span>
               </div>
-              <div className="row" style={{ flexWrap: 'nowrap' }}>
+              <div className="client-row-trail">
                 {c.source === 'site' && <span className="badge badge-info" title="Primeiro contato pelo site"><Globe aria-hidden /> Site</span>}
-                <span className="small subtle nowrap" style={{ display: 'none' }}>{formatDate(c.created_at)}</span>
                 <ChevronRight size={18} color="var(--ink-3)" aria-hidden />
               </div>
             </Link>
