@@ -95,11 +95,20 @@ Outros comandos:
    (build `npm run build`, saída `dist`).
 3. Em *Settings → Environment Variables*, cadastre `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
    `VITE_CLOUDINARY_CLOUD_NAME` e `VITE_CLOUDINARY_UPLOAD_PRESET` (Production e Preview).
-4. Faça o deploy. O `vercel.json` já cuida das rotas do site (atualizar a página em `/admin/agenda`
-   funciona) e dos cabeçalhos de cache e segurança.
-5. Volte ao passo 3 e cadastre o domínio final nas URLs de autenticação do Supabase.
+4. (Recomendado) Cadastre também `CRON_SECRET` com um valor longo e aleatório. O Cron diário
+   `/api/keep-alive` usa isso para manter o Supabase acordado sem deixar o endpoint aberto.
+5. Faça o deploy. O `vercel.json` já cuida das rotas do site, dos cabeçalhos e do Cron
+   (`0 12 * * *` UTC = **9h em São Paulo**).
+6. Volte ao passo 3 das URLs de autenticação do Supabase e cadastre o domínio final.
 
 Alterações feitas no painel aparecem no site sem novo deploy: o conteúdo vem do banco a cada visita.
+
+### Keep-alive do banco (Cron)
+
+No plano gratuito, o Supabase pode pausar o projeto se ninguém usar por um tempo. O site já tem um
+Cron na Vercel que chama `/api/keep-alive` **uma vez por dia** e faz uma consulta leve
+(`get_site_content`). Depois do deploy, confira em *Vercel → Project → Settings → Cron Jobs*.
+No plano Hobby da Vercel o limite é 1 Cron por dia — exatamente o que este projeto usa.
 
 ## 7. Primeiros passos no painel
 
@@ -142,6 +151,8 @@ Observações:
 supabase/
   setup-completo.sql único script do banco (rode no SQL Editor)
   tests/             testes do banco (npm run test:db)
+api/
+  keep-alive.ts      Cron diário da Vercel (ping no Supabase)
 src/
   lib/               formatação, conteúdo padrão, Cloudinary, WhatsApp, erros
   hooks/             autenticação, conteúdo do site, dados públicos
